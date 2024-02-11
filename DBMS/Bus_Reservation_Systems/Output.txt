@@ -1,0 +1,115 @@
+mysql> show database bookings;
+ERROR 1064 (42000): You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'database bookings' at line 1
+mysql> show database;
+ERROR 1064 (42000): You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'database' at line 1
+mysql> show databases;
++--------------------+
+| Database           |
++--------------------+
+| booking            |
+| information_schema |
+| mysql              |
+| performance_schema |
+| siddhantdb         |
+| sys                |
++--------------------+
+6 rows in set (0.00 sec)
+
+mysql> show booking;
+ERROR 1064 (42000): You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'booking' at line 1
+mysql> select * from booking;
+ERROR 1046 (3D000): No database selected
+mysql> select * from buses;
+ERROR 1046 (3D000): No database selected
+mysql> use booking;
+Database changed
+mysql> select * from buses;
++--------+---------+---------+----------+----------+----------+------+
+| bus_id | b_from  | b_to    | s_time   | j_time   | a_time   | fare |
++--------+---------+---------+----------+----------+----------+------+
+|     37 | gurgaon | delhi   | 09:00:00 | 01:00:00 | 10:00:00 |   90 |
+|     38 | delhi   | rohtak  | 12:00:00 | 03:00:00 | 15:00:00 |   42 |
+|     39 | goa     | manipal | 17:00:00 | 02:00:00 | 19:00:00 |  987 |
++--------+---------+---------+----------+----------+----------+------+
+3 rows in set (0.00 sec)
+
+mysql> select * from bookings;
++---------+------+--------+------------+------+
+| book_id | u_id | bus_id | j_date     | seat |
++---------+------+--------+------------+------+
+|       2 |    2 |     39 | 2022-09-03 |    1 |
+|       3 |    2 |     38 | 2023-06-07 |    1 |
+|       4 |    2 |     38 | 2022-08-03 |    1 |
+|       5 |    2 |     38 | 2022-08-03 |    2 |
++---------+------+--------+------------+------+
+4 rows in set (0.00 sec)
+
+mysql> select * from stats;
++--------+------------+------+
+| bus_id | j_date     | avl  |
++--------+------------+------+
+|     39 | 2022-09-03 |   39 |
+|     38 | 2023-06-07 |   39 |
+|     38 | 2022-08-03 |   38 |
++--------+------------+------+
+3 rows in set (0.00 sec)
+
+mysql> select * from users;
++---------+----------+--------------------+----------+
+| user_id | name     | email              | password |
++---------+----------+--------------------+----------+
+|       1 | admin    | admin              | admin    |
+|       2 | Siddhant | siddhant@gmail.com | 123      |
+|       4 | joy      | joy                | 123      |
++---------+----------+--------------------+----------+
+3 rows in set (0.00 sec)
+
+mysql> desc users;
++----------+-------------+------+-----+---------+----------------+
+| Field    | Type        | Null | Key | Default | Extra          |
++----------+-------------+------+-----+---------+----------------+
+| user_id  | int         | NO   | PRI | NULL    | auto_increment |
+| name     | varchar(30) | YES  |     | NULL    |                |
+| email    | varchar(30) | YES  | UNI | NULL    |                |
+| password | varchar(30) | YES  |     | NULL    |                |
++----------+-------------+------+-----+---------+----------------+
+4 rows in set (0.04 sec)
+
+mysql> desc buses;
++--------+-------------+------+-----+---------+----------------+
+| Field  | Type        | Null | Key | Default | Extra          |
++--------+-------------+------+-----+---------+----------------+
+| bus_id | int         | NO   | PRI | NULL    | auto_increment |
+| b_from | varchar(30) | YES  |     | NULL    |                |
+| b_to   | varchar(30) | YES  |     | NULL    |                |
+| s_time | time        | YES  |     | NULL    |                |
+| j_time | time        | YES  |     | NULL    |                |
+| a_time | time        | YES  |     | NULL    |                |
+| fare   | int         | YES  |     | NULL    |                |
++--------+-------------+------+-----+---------+----------------+
+7 rows in set (0.00 sec)
+
+mysql> desc stats;
++--------+------+------+-----+---------+-------+
+| Field  | Type | Null | Key | Default | Extra |
++--------+------+------+-----+---------+-------+
+| bus_id | int  | YES  |     | NULL    |       |
+| j_date | date | YES  |     | NULL    |       |
+| avl    | int  | YES  |     | NULL    |       |
++--------+------+------+-----+---------+-------+
+3 rows in set (0.00 sec)
+
+mysql> desc bookings;
++---------+------+------+-----+---------+----------------+
+| Field   | Type | Null | Key | Default | Extra          |
++---------+------+------+-----+---------+----------------+
+| book_id | int  | NO   | PRI | NULL    | auto_increment |
+| u_id    | int  | YES  |     | NULL    |                |
+| bus_id  | int  | YES  |     | NULL    |                |
+| j_date  | date | YES  |     | NULL    |                |
+| seat    | int  | YES  |     | NULL    |                |
++---------+------+------+-----+---------+----------------+
+5 rows in set (0.00 sec)
+
+mysql> insert into users(user_id,name,email,password) values(10,"ayush","ayush2002@gmail.com","1234");
+Query OK, 1 row affected (0.00 sec)

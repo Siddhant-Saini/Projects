@@ -1,0 +1,411 @@
+def dbconnect(h,u,p):
+    import mysql.connector as ms
+    try:
+        conn= ms.connect(host=h,user=u,passwd=p)
+        print("connected to mysql...")
+        return conn
+    except Exception as e:
+        print("connection failed...",e)
+        return False
+
+def init(dbname,conn):
+    cur=conn.cursor()
+    sql='show databases;'
+    cur.execute(sql)
+    result=cur.fetchall()
+    for row in result:
+        if row[0]==dbname:
+            print("databse found")
+            sql='use {}'.format(dbname)
+            cur.execute(sql)
+            cur.close()
+            break
+    else:
+        print("databse not found")
+        print("creating database and tables")
+        sql='create database {}'.format(dbname)
+        cur.execute(sql)
+        sql='use {}'.format(dbname)
+        cur.execute(sql)
+        #buses
+        sql='create table buses(bus_id INT PRIMARY KEY AUTO_INCREMENT, b_from varchar(30), b_to varchar(30),s_time time,j_time time,a_time time,fare int)'
+        cur.execute(sql)
+        #users
+        sql='create table users(user_id INT PRIMARY KEY AUTO_INCREMENT, name varchar(30), email varchar(30) UNIQUE ,password varchar(30))'
+        cur.execute(sql)
+        #create admin user
+        sql='insert into users values(1,"admin","admin","admin");'
+        cur.execute(sql)
+        #booking
+        sql='create table bookings(book_id INT PRIMARY KEY AUTO_INCREMENT, u_id int,bus_id int,j_date date, seat int)'
+        cur.execute(sql)
+        #availability
+        sql='create table stats(bus_id int,j_date date, avl int)'
+        cur.execute(sql)
+        print("database created successfully...")
+        cur.close()
+
+def signin(conn):
+    print("\n Login to your account...")
+    cur= conn.cursor()
+    email=input("enter your email:")
+    passwd=input("enter password:")
+    sql='select * from users where email ="{}" and password="{}"'.format(email,passwd)
+    cur.execute(sql)
+    res=cur.fetchone()
+    n=cur.rowcount
+    if res is None:
+        cur.close()
+        print("LOGIN FAILED!!invalid combination of email and password...")
+        return 0,0
+    else:
+        print("login successful...")
+        uid,uname=res[0], res[1]
+        print("welcome",uname)
+        cur.close()
+        return uid,uname
+    
+"""def signin(conn):
+    print("\n Login to your account...")
+    cur= conn.cursor()
+    email=input("enter your email:")
+    passwd=input("enter password:")
+    sql='select * from users where email ="{}" and password="{}"'.format(email,passwd)
+    cur.execute(sql)
+    res=cur.fetchone()
+    n=cur.rowcount
+    if n==-1:
+        cur.close()
+        print("LOGIN FAILED!!invalid combination of email and password...")
+        return 0,0
+    else:
+        print("login successful...")
+        uid,uname=res[0], res[1]
+        cur.close()
+        return uid,uname"""
+
+def register(conn):
+        cur=conn.cursor()
+        name=input("enter your name:")
+        email=input("enter your email:")
+        passwd=input("enter password:")
+        sql='insert into users(name,email,password) values ("{}","{}","{}")'.format(name, email, passwd)
+        try:
+            cur.execute(sql)
+            print("User registration successful")
+            cur.close()
+            return True
+        except:
+            cur.close()
+            print("error while creating new user.email already exists")
+            return False
+
+def admin(conn):
+    menu="""
+    1.View booking for a bus
+    2.Create a new bus route
+    3.Delete a bus route
+    4.View bookings on all routes for a date
+    5.View bus routes
+    6.Sign out
+    """
+    
+    while True:
+        print(menu)
+        ch=int(input("enter your choice: "))
+        if ch==1:
+            cur=conn.cursor()
+            b_id= int(input("enter bus id:"))
+            sql='select u.user_id, name, email, bus_id, j_date, seat from bookings b, users u where b.u_id=u.user_id and b.bus_id={}'.format(b_id)
+            cur.execute(sql)
+            res=cur.fetchall()
+            #right align, left align
+            print('{:<5}{:<20}{:<30}{:<7}{:<12}{:>7}'.format('UID','Passenger Name','Email','BusID','Date','Seat'))
+            if len(res)==0:
+                print("no bookings found..")
+            else:
+                for row in res:
+                    print('{:<5}{:<20}{:<30}{:<7}{:<12}{:>7}'.format(row[0],row[1],row[2],row[3],str(row[4]),row[5]))
+            cur.close()
+        elif ch==2:
+            cur=conn.cursor()
+            from_bus= input("From:")
+            to_bus= input("To:")
+            s=input("start time(hh:mm):")
+            j=input("journey time(hh:mm):")
+            a=input("arrival time(hh:mm):")
+            fare= int(input("enter fare:"))
+            sql='insert into buses(b_from,b_to,s_time,j_time,a_time,fare) values ("{}","{}","{}","{}","{}",{})'.format(from_bus,to_bus,s,j,a,fare)
+            cur.execute(sql)
+            print("route added")
+            cur.close()
+            pass
+        elif ch==3:
+            cur=conn.cursor()
+            b_id= int(input("enter bus id:"))
+            sql='delete from buses where bus_id={}'.format(b_id)
+            cur.execute(sql)
+            print("route deleted")
+            cur.close()
+        elif ch==4:
+            cur=conn.cursor()
+            d= input("enter DATE (YYYY-MM-DD):")
+            sql='select u.user_id, name, email, bus_id, j_date, seat from bookings b, users u where b.u_id=u.user_id and b.j_date="{}"'.format(d)
+            cur.execute(sql)
+            res=cur.fetchall()
+            #right align, left align
+            print('{:<5}{:<20}{:<30}{:<7}{:<12}{:>7}'.format('UID','Passenger Name','Email','BusID','Date','Seat'))
+            if len(res)==0:
+                print("no bookings found..")
+            else:
+                for row in res:
+                    print('{:<5}{:<20}{:<30}{:<7}{:<12}{:>7}'.format(row[0],row[1],row[2],row[3],str(row[4]),row[5]))
+            cur.close()
+        elif ch==5:
+            cur=conn.cursor()
+            sql='select * from buses'
+            cur.execute(sql)
+            res=cur.fetchall()
+            #right align, left align
+            print('{:<5}{:<20}{:<20}{:<15}{:<15}{:<15}{:>6}'.format('BID','From','To','Start Time','Journey Time','Arrival Time','Fare'))
+            if len(res)==0:
+                print("no bookings found..")
+            else:
+                for row in res:
+                    print('{:<5}{:<20}{:<20}{:<15}{:<15}{:<15}{:>6}'.format(row[0],row[1],row[2],str(row[3]),str(row[4]),str(row[5]),row[6]))
+            cur.close()
+        elif ch==6:
+            print("SIgn Out...")
+            break
+        else:
+            print("invalid input")
+'''17th and 51th line u_id-->changed to user_id'''
+
+def user(uid,uname,conn):
+    menu="""
+    1.Book a ticket
+    2.View your bookings
+    3.Cancel your ticket
+    4.Sign out
+    """
+    while True:
+        print(menu)
+        ch=int(input("Enter your choice:"))
+        if ch==1:
+            cur=conn.cursor()
+            f=input("From: ")
+            t=input("To: ")
+            sql='select * from buses where b_from="{}"and b_to="{}"'.format(f,t)
+            cur.execute(sql)
+            res=cur.fetchall()
+            if cur.rowcount==0:
+                print("Sorry!No buses found on this route")
+            else:
+                d=input("Date(YYYY-MM-DD):")
+                msg=print("Following buses are found on this route")
+                print(msg)
+                print('-')
+                print('{:<5}{:<20}{:<20}{:<15}{:<15}{:<15}{:>6}'.format('BID','From','To','Start Time','Journey Time','Arrival Time','Fare'))
+                for row in res:
+                    print('{:<5}{:<20}{:<20}{:<15}{:<15}{:>6}'.format(row[0],row[1],row[2],str(row[3]),str(row[4]),str(row[5]),row[6]))
+                u_b_id= int(input("\n enter bus id to book ticket:"))
+                sql='select * from stats where bus_id={} and j_date="{}"'.format(u_b_id,d)
+                cur.execute(sql)
+                res=cur.fetchone()
+                if cur.rowcount==0:
+                    input("press enter to pay the fare")
+                    sql='insert into bookings(u_id,bus_id,j_date,seat)values({},{},"{}",1)'.format(uid,u_b_id,d)
+                    cur.execute(sql)
+                    sql='insert into stats values({},"{}",39)'.format(u_b_id,d)
+                    cur.execute(sql)
+                    print("ticket booked. Seat number is 1. Go to my bookings for more details")
+                    
+                else:
+                    if res[2]==0:
+                        print("sorry the bus if full") 
+                    else:
+                        seat=40-res[2]+1
+                        sql='insert into bookings(u_id,bus_id,j_date,seat)values({},{},"{}",{})'.format(uid,u_b_id,d,seat)
+                        cur.execute(sql)
+                        sql='update stats set avl=avl-1 where bus_id={} and j_date="{}"'.format(u_b_id,d)
+                        cur.execute(sql)
+                        print("ticket booked. Seat number is ",seat,". Go to my bookings for more details")
+                cur.close()
+        elif ch==2:
+            cur=conn.cursor()
+            sql='select book_id, b1.bus_id,j_date, seat,b_from,b_to,s_time,j_time,a_time,fare from bookings b1, buses b2 where b1.bus_id=b2.bus_id and u_id={}'.format(uid)
+            cur.execute(sql)
+            res=cur.fetchall()
+            if len(res)==0:
+                print("no data found")
+            else:    
+                print('{:<9}{:<5}{:<13}{:<6}{:<20}{:<20}{:<10}{:<10}{:<10}{:>8}'.format('Book_ID','BID','Date','Seat','From','To','Start','Time','Arrival','Fare'))
+                for row in res:
+                    print('{:<9}{:<5}{:<13}{:<6}{:<20}{:<20}{:<10}{:<10}{:<10}{:>8}'.format(row[0],row[1],str(row[2]),row[3],row[4],row[5],str(row[6]),str(row[7]),str(row[8]),row[9]))
+            cur.close()
+        elif ch==3:
+            cur=conn.cursor()
+            book_id=int(input("enter booking id:"))
+            sql='select bus_id, j_date from bookings where book_id={}'.format(book_id)
+            cur.execute(sql)
+            b,dt= cur.fetchone()
+            sql='update stats set avl=avl+1 where bus_id={} and j_date="{}"'.format(b,dt)
+            cur.execute(sql)
+            sql='delete from bookings where book_id={}'.format(book_id)
+            cur.execute(sql)
+            cur.close()
+            print("Booking cancelled successfully!")
+        elif ch==4:
+            print("\nSigned out...")
+            break
+        else:
+            print("Invalid option")
+        """elif ch==3:
+            cur=conn.cursor()
+            book_id=int(input("enter booking id:"))
+            sql='select bus_id, j_date from bookings where book_id={}'.format(book_id)
+            cur.execute(sql)
+            b,dt= cur.fetchone()
+            sql='update stats set avl=avl+1 where bus_id={} and j_date="{}"'.format(b,dt)
+            cur.execute(sql)
+            sql='delete from bookings where book_id={}'.format(book_id)
+            cur.close()"""
+        
+'''def user(uid,uname,conn):
+    menu=
+    
+    1.Book a ticket
+    2.View your bookings
+    3.Cancel your ticket
+    4.Sign out
+    
+    
+    while True:
+        print(menu)
+        ch=int(input("Enter your choice:"))
+        if ch==1:
+            cur=conn.cursor()
+            f=input("From: ")
+            t=input("To: ")
+            sql='select * from buses where b_from="{}"and b_to="{}"'.format(f,t)
+            cur.execute(sql)
+            res=cur.fetchall()
+            if cur.rowcount==0:
+                print("Sorry!No buses found on this route")
+            else:
+                d=input("Date(YYYY-MM-DD):")
+                msg=print("Following buses are found on this route")
+                print(msg)
+                print('-')
+                print('{:<5}{:<20}{:<20}{:<15}{:<15}{:<15}{:<6}'.format('BID','From','To','Start Time','Journey Time','Arrival Time','Fare'))
+                for row in res:
+                    print('{:<5}{:<20}{:<20}{:<15}{:<15}{:>6}'.format(row[0],row[1],row[2],str(row[3]),str(row[4]),str(row[5]),row[6]))
+                u_b_id= int(input("\n enter bus id to book ticket:"))
+                sql='select * from stats where bus_id={} and j_date="{}"'.format(u_b_id,d)
+                cur.execute(sql)
+                res=cur.fetchone()
+                if cur.rowcount==-1:
+                    input("press enter to pay the fare")
+                    sql='insert into bookings(u_id,bus_id,j_date,seat)values({},{},"{}",1)'.format(uid,u_b_id,d)
+                    cur.execute(sql)
+                    sql='insert into stats values({},"{}",39)'.format(u_b_id,d)
+                    cur.execute(sql)
+                    print("ticket booked. Seat number is 1. Go to my bookings for more details")
+                    
+                else:
+                    if res is None:
+                        print("LOGIN FAILED!!")
+                        cur.close()
+                        return
+                    elif (res[2]==0):
+                        print("sorry the bus if full")
+                    else:
+                        seat=40-res[2]+1
+                        sql='insert into bookings(u_id,bus_id,j_date,seat)values({},{},"{}",{})'.format(uid,u_b_id,d,seat)
+                        cur.execute(sql)
+                        sql='update stats set avl=avl-1 where bus_id={} and j_date="{}"'.format(u_b_id,d)
+                        cur.execute(sql)
+                        print("ticket booked. Seat number is ",seat,". Go to my bookings for more details")
+                cur.close()
+        elif ch==2:
+            cur=conn.cursor()
+            sql='select book_id, b1.bus_id,j_date, seat,b_from,b_to,s_time,j_time,a_time,fare from bookings b1, buses b2 where b1.bus_id=b2.bus_id and u_id={}'.format(uid)
+            cur.execute(sql)
+            res=cur.fetchall()
+            if len(res)==0:
+                print("no data found")
+            else:    
+                print('{:<9}{:<5}{:<13}{:<6}{:<20}{:<20}{:<10}{:<10}{:<10}{:>8}'.format('Book_ID','BID','Date','Seat','From','To','Start','Time','Arrival','Fare'))
+                for row in res:
+                    print('{:<9}{:<5}{:<13}{:<6}{:<20}{:<20}{:<10}{:<10}{:<10}{:>8}'.format(row[0],row[1],str(row[2]),row[3],row[4],row[5],str(row[6]),str(row[7]),str(row[8]),row[9]))
+            cur.close()
+        elif ch==3:
+            cur=conn.cursor()
+            book_id=int(input("enter booking id:"))
+            sql='select bus_id, j_date from bookings where book_id={}'.format(book_id)
+            cur.execute(sql)
+            b,dt= cur.fetchone()
+            sql='update stats set avl=avl+1 where bus_id={},j_date="{}"'.format(b,dt)
+            cur.execute(sql)
+            sql='delete from bookings where book_id={}'.format(book_id)
+            cur.close()
+        elif ch==4:
+            print("\nSigned out...")
+            break
+        else:
+            print("Invalid option")'''
+
+def main():
+    #connect with database
+    h=input("enter host name:")
+    u=input("enter username:")
+    p=input("enter password")
+    if h=='':
+        h='localhost'
+    if u=='':
+        u='root'
+    if p=='':
+        p='mysql@2002'
+    conn = dbconnect(h,u,p)
+    #initialize database
+    if conn==False:
+        pass
+    else:
+        db=input("enter database name:")
+        if db=='':
+            db='booking'
+        init(db, conn)
+    
+        #login
+        menu="""
+        1. Sign In
+        2. Register
+        3. Exit
+        """
+        uid=0
+        print(menu)
+        ch= int(input("enter your choice"))
+        if ch==1:
+            uid,uname=signin(conn)
+        elif ch==2:
+            if register(conn):
+                uid,uname=signin(conn)
+            else:
+                pass
+        elif ch==3:
+            print("Exiting")
+            pass
+        else:
+            print("invalid option")
+
+        if uid==1:
+            admin(conn)
+        elif uid==0:
+            pass
+        else:
+            user(uid,uname,conn)
+
+        #Commit to the database    
+    conn.commit()
+    conn.close()
+
