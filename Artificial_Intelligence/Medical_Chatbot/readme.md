@@ -6,6 +6,9 @@
 
 This project presents **Chat-Med**, an **AI-powered Medical Chatbot** designed to provide real-time medical consultations. The chatbot is built using **Llama 2** and fine-tuned on a medical knowledge base using the **GALE Encyclopedia of Medicine**. It is capable of answering a wide range of medical queries by retrieving information and optionally citing the sources for the responses.
 
+### Llama 2 Model
+  ![Llama 2](./Screenshots/llama2.jpg)
+
 Chat-Med leverages state-of-the-art technologies such as **LangChain** for QA retrieval, **Faiss** for vector-based similarity searches, and **Chainlit** for user interaction.
 
 ---
@@ -17,8 +20,8 @@ Chat-Med leverages state-of-the-art technologies such as **LangChain** for QA re
 - **Efficient Vector Database**: Uses **Faiss** to store and retrieve medical documents quickly.
 - **Interactive User Interface**: Built with **Chainlit**, enabling a seamless question-and-answer experience.
 - **Source Transparency**: Provides references from the knowledge base to ensure credibility.
-### Llama 2 Model
-  ![Llama 2](./Screenshots/llama2.png)
+
+
 ---
 
 ## Project Architecture
